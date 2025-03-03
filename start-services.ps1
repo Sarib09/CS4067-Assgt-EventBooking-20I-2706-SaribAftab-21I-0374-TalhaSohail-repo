@@ -1,0 +1,5 @@
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd user-service; npm start"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd event-service; npm start"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd booking-service; npm start"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd notification-service; npm start"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd client; npm start" 
