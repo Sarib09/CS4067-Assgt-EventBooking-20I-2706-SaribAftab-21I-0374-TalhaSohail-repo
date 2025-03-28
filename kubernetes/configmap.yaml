@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-booking-config
+  namespace: online-event-booking-sarib-aftab
+data:
+  NODE_ENV: "production"
+  
+  # Service URLs
+  USER_SERVICE_URL: "http://user-service:3001"
+  EVENT_SERVICE_URL: "http://event-service:3002"
+  BOOKING_SERVICE_URL: "http://booking-service:3003"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:3004"
+  
+  # MongoDB configuration for Event and Notification services
+  MONGODB_HOST: "event-booking.qcbnm.mongodb.net"
+  MONGODB_USER: "Sarib"
+  MONGODB_DB_EVENT: "event-booking"
+  MONGODB_DB_NOTIFICATION: "event-booking"
+  
+  # RabbitMQ configuration
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: "guest"
+  
+  # Email configuration for Notification service
+  EMAIL_SERVICE: "gmail"
+  EMAIL_USER: "a2dragneel00@gmail.com"
+  EMAIL_FROM: "a2dragneel00@gmail.com"
+  
+  # Port configurations
+  USER_SERVICE_PORT: "3001"
+  EVENT_SERVICE_PORT: "3002"
+  BOOKING_SERVICE_PORT: "3003"
+  NOTIFICATION_SERVICE_PORT: "3004"
+  FRONTEND_PORT: "80" 

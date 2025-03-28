@@ -1,6 +1,6 @@
 const { supabase } = require('../config/supabase');
 const { logger } = require('../utils/logger');
-const bcrypt = require('bcrypt');
+const passwordUtils = require('../utils/passwordUtils');
 
 /**
  * User model for interacting with Supabase
@@ -13,9 +13,8 @@ class User {
    */
   static async create(userData) {
     try {
-      // Hash password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(userData.password, salt);
+      // Hash password using our utility
+      const hashedPassword = await passwordUtils.hashPassword(userData.password);
       
       // Insert user into Supabase
       const { data, error } = await supabase
@@ -109,10 +108,9 @@ class User {
       if (userData.phone) updateData.phone = userData.phone;
       if (userData.email) updateData.email = userData.email;
       
-      // If password is provided, hash it
+      // If password is provided, hash it with our utility
       if (userData.password) {
-        const salt = await bcrypt.genSalt(10);
-        updateData.password = await bcrypt.hash(userData.password, salt);
+        updateData.password = await passwordUtils.hashPassword(userData.password);
       }
       
       // Update user in Supabase
@@ -166,7 +164,7 @@ class User {
    * @returns {boolean} True if password matches
    */
   static async verifyPassword(password, hashedPassword) {
-    return await bcrypt.compare(password, hashedPassword);
+    return await passwordUtils.verifyPassword(password, hashedPassword);
   }
 }
 
