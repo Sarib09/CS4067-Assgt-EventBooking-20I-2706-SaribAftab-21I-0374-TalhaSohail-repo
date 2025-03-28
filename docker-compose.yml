@@ -1,0 +1,181 @@
+version: '3.3'
+
+services:
+  # MongoDB for Event and Notification Services
+  mongodb:
+    image: mongo:6-jammy
+    container_name: event-booking-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: Sarib
+      MONGO_INITDB_ROOT_PASSWORD: Mongodb123@
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - event-booking-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # RabbitMQ for Messaging
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: event-booking-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - event-booking-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: event-booking-user-service
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      NODE_ENV: development
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: 24h
+      EVENT_SERVICE_URL: http://event-service:3002
+      BOOKING_SERVICE_URL: http://booking-service:3003
+    networks:
+      - event-booking-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Event Service
+  event-service:
+    build:
+      context: ./event-service
+      dockerfile: Dockerfile
+    container_name: event-booking-event-service
+    ports:
+      - "3002:3002"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    environment:
+      PORT: 3002
+      NODE_ENV: development
+      MONGODB_URI: mongodb://Sarib:Mongodb123%40@mongodb:27017/event-booking?authSource=admin
+      USER_SERVICE_URL: http://user-service:3001
+      BOOKING_SERVICE_URL: http://booking-service:3003
+    networks:
+      - event-booking-network
+    restart: unless-stopped
+
+  # Booking Service
+  booking-service:
+    build:
+      context: ./booking-service
+      dockerfile: Dockerfile
+    container_name: event-booking-booking-service
+    ports:
+      - "3003:3003"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      event-service:
+        condition: service_started
+    environment:
+      PORT: 3003
+      NODE_ENV: development
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      USER_SERVICE_URL: http://user-service:3001
+      EVENT_SERVICE_URL: http://event-service:3002
+      NOTIFICATION_SERVICE_URL: http://notification-service:3004
+      PAYMENT_GATEWAY_URL: http://localhost:3005
+    networks:
+      - event-booking-network
+    restart: unless-stopped
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: event-booking-notification-service
+    ports:
+      - "3004:3004"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      PORT: 3004
+      NODE_ENV: development
+      MONGODB_URI: mongodb://Sarib:Mongodb123%40@mongodb:27017/event-booking?authSource=admin
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      EMAIL_SERVICE: gmail
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM}
+    networks:
+      - event-booking-network
+    restart: unless-stopped
+
+  # Frontend Client
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: event-booking-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      user-service:
+        condition: service_started
+      event-service:
+        condition: service_started
+      booking-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+    networks:
+      - event-booking-network
+    restart: unless-stopped
+
+# Networks
+networks:
+  event-booking-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  mongodb_data:
+  rabbitmq_data: 

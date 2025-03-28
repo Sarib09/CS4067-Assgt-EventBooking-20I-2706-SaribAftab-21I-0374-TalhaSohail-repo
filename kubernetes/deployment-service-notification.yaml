@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: online-event-booking-sarib-aftab
+  labels:
+    app: notification-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+      - name: notification-service
+        image: event-booking/notification-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3004
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "512Mi"
+          requests:
+            cpu: "0.2"
+            memory: "256Mi"
+        env:
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: event-booking-config
+              key: NOTIFICATION_SERVICE_PORT
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: event-booking-config
+              key: NODE_ENV
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: event-booking-secrets
+              key: MONGODB_URI
+        - name: RABBITMQ_URL
+          value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASSWORD)@$(RABBITMQ_HOST):$(RABBITMQ_PORT)"
+        - name: RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: event-booking-config
+              key: RABBITMQ_HOST
+        - name: RABBITMQ_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: event-booking-config
+              key: RABBITMQ_PORT
+        - name: RABBITMQ_USER
+          valueFrom:
+            configMapKeyRef:
+              name: event-booking-config
+              key: RABBITMQ_USER
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: event-booking-secrets
+              key: RABBITMQ_PASSWORD
+        - name: EMAIL_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: event-booking-config
+              key: EMAIL_SERVICE
+        - name: EMAIL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: event-booking-config
+              key: EMAIL_USER
+        - name: EMAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: event-booking-secrets
+              key: EMAIL_PASSWORD
+        - name: EMAIL_FROM
+          valueFrom:
+            configMapKeyRef:
+              name: event-booking-config
+              key: EMAIL_FROM
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3004
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3004
+          initialDelaySeconds: 30
+          periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: online-event-booking-sarib-aftab
+spec:
+  selector:
+    app: notification-service
+  ports:
+  - port: 3004
+    targetPort: 3004
+  type: ClusterIP 

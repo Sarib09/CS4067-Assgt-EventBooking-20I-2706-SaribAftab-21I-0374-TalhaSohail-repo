@@ -76,7 +76,6 @@ The platform uses two different database technologies:
 1. User browses events through the Event Service
 2. User creates a booking through the Booking Service
 3. Booking Service checks event availability with the Event Service
-4. Booking Service processes payment through the Payment Gateway
-5. Booking Service updates event availability in the Event Service
-6. Booking Service sends a notification message to RabbitMQ
-7. Notification Service consumes the message and sends an email to the user 
+4. Booking Service updates event availability in the Event Service
+5. Booking Service sends a notification message to RabbitMQ
+6. Notification Service consumes the message and sends an email to the user 
