@@ -6,7 +6,7 @@ metadata:
   labels:
     app: notification-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: notification-service
@@ -23,11 +23,11 @@ spec:
         - containerPort: 3004
         resources:
           limits:
-            cpu: "0.5"
-            memory: "512Mi"
-          requests:
-            cpu: "0.2"
+            cpu: "0.3"
             memory: "256Mi"
+          requests:
+            cpu: "0.1"
+            memory: "128Mi"
         env:
         - name: PORT
           valueFrom:
@@ -41,11 +41,11 @@ spec:
               key: NODE_ENV
         - name: MONGODB_URI
           valueFrom:
-            secretKeyRef:
-              name: event-booking-secrets
+            configMapKeyRef:
+              name: event-booking-config
               key: MONGODB_URI
         - name: RABBITMQ_URL
-          value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASSWORD)@$(RABBITMQ_HOST):$(RABBITMQ_PORT)"
+          value: "amqp://guest:guest@rabbitmq:5672"
         - name: RABBITMQ_HOST
           valueFrom:
             configMapKeyRef:
