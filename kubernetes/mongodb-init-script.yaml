@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongodb-init-script
+  namespace: online-event-booking-sarib-aftab
+data:
+  init-mongo.js: |
+    db = db.getSiblingDB('admin');
+    // Authenticate as the root user (this user is created by MONGO_INITDB_ROOT_USERNAME and MONGO_INITDB_ROOT_PASSWORD)
+    db.auth('Sarib', 'Mongodb123@');
+    
+    // Create event-booking database and switch to it
+    db = db.getSiblingDB('event-booking');
+    
+    // Create a user for the event-booking database
+    db.createUser({
+      user: 'Sarib',
+      pwd: 'Mongodb123@',
+      roles: [
+        { role: 'readWrite', db: 'event-booking' }
+      ]
+    });
+    
+    // Create some initial collections
+    db.createCollection('events');
+    db.createCollection('notifications');
+    db.createCollection('bookings');
+    
+    // Insert some initial data
+    db.events.insertOne({
+      name: "Sample Event",
+      description: "This is a sample event created during initialization",
+      date: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }); 

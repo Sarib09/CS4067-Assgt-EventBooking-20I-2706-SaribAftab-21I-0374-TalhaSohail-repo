@@ -9,14 +9,14 @@ metadata:
     nginx.ingress.kubernetes.io/use-regex: "true"
     # Enable SSL redirect
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    # Optional: Add TLS configuration 
-    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Note: We're using a pre-created TLS secret
+    # Remove cert-manager annotation as it's not installed
 spec:
-  # Optional: Configure TLS
-  # tls:
-  # - hosts:
-  #   - event-booking.example.com
-  #   secretName: event-booking-tls
+  # Configure TLS
+  tls:
+  - hosts:
+    - event-booking.example.com
+    secretName: event-booking-tls
   rules:
   - host: event-booking.example.com  # Replace with your actual domain
     http:

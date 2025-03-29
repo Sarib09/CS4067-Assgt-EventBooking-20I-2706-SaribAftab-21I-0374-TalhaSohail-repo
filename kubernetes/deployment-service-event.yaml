@@ -6,7 +6,7 @@ metadata:
   labels:
     app: event-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: event-service
@@ -23,11 +23,11 @@ spec:
         - containerPort: 3002
         resources:
           limits:
-            cpu: "0.5"
-            memory: "512Mi"
-          requests:
-            cpu: "0.2"
+            cpu: "0.3"
             memory: "256Mi"
+          requests:
+            cpu: "0.1"
+            memory: "128Mi"
         env:
         - name: PORT
           valueFrom:
@@ -41,14 +41,19 @@ spec:
               key: NODE_ENV
         - name: MONGODB_URI
           valueFrom:
-            secretKeyRef:
-              name: event-booking-secrets
+            configMapKeyRef:
+              name: event-booking-config
               key: MONGODB_URI
         - name: USER_SERVICE_URL
           valueFrom:
             configMapKeyRef:
               name: event-booking-config
               key: USER_SERVICE_URL
+        - name: BOOKING_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: event-booking-config
+              key: BOOKING_SERVICE_URL
         readinessProbe:
           httpGet:
             path: /health

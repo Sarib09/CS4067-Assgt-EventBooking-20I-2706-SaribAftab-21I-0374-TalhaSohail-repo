@@ -6,7 +6,7 @@ metadata:
   labels:
     app: user-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: user-service
@@ -23,11 +23,11 @@ spec:
         - containerPort: 3001
         resources:
           limits:
-            cpu: "0.75"
-            memory: "1Gi"
-          requests:
             cpu: "0.3"
-            memory: "512Mi"
+            memory: "256Mi"
+          requests:
+            cpu: "0.1"
+            memory: "128Mi"
         env:
         - name: PORT
           valueFrom:

@@ -13,10 +13,12 @@ data:
   NOTIFICATION_SERVICE_URL: "http://notification-service:3004"
   
   # MongoDB configuration for Event and Notification services
-  MONGODB_HOST: "event-booking.qcbnm.mongodb.net"
+  MONGODB_HOST: "mongodb"
+  MONGODB_PORT: "27017"
   MONGODB_USER: "Sarib"
   MONGODB_DB_EVENT: "event-booking"
   MONGODB_DB_NOTIFICATION: "event-booking"
+  MONGODB_URI: "mongodb://Sarib:Mongodb123%40@mongodb:27017/event-booking?authSource=admin"
   
   # RabbitMQ configuration
   RABBITMQ_HOST: "rabbitmq"
