@@ -144,9 +144,75 @@ foreach ($process in $portForwardProcesses) {
 }
 
 # Add a host file entry for local testing
-Write-Host "`n[Step 18] Setting up local DNS for ingress" -ForegroundColor Yellow
-Write-Host "To test the ingress locally, add the following entry to your hosts file (C:\Windows\System32\drivers\etc\hosts):" -ForegroundColor Yellow
-Write-Host "127.0.0.1 event-booking.example.com" -ForegroundColor White
+Write-Host "`n[Step 18] Setting up local DNS and port forwarding for ingress" -ForegroundColor Yellow
+
+# Get the ingress controller pod name
+$ingressControllerPod = kubectl get pods -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx -o jsonpath="{.items[0].metadata.name}" 2>$null
+$isIngressReady = $false
+
+if ($ingressControllerPod) {
+    Write-Host "Ingress controller pod found: $ingressControllerPod" -ForegroundColor Green
+    
+    # Check if ingress controller is ready
+    $podStatus = kubectl get pod $ingressControllerPod -n ingress-nginx -o jsonpath="{.status.phase}" 2>$null
+    if ($podStatus -eq "Running") {
+        Write-Host "Ingress controller is running properly!" -ForegroundColor Green
+        $isIngressReady = $true
+    } else {
+        Write-Host "Ingress controller is not ready (Status: $podStatus). Waiting 60 seconds..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 60
+        $podStatus = kubectl get pod $ingressControllerPod -n ingress-nginx -o jsonpath="{.status.phase}" 2>$null
+        if ($podStatus -eq "Running") {
+            Write-Host "Ingress controller is now running!" -ForegroundColor Green
+            $isIngressReady = $true
+        } else {
+            Write-Host "Ingress controller is still not ready. Proceeding with alternative setup." -ForegroundColor Red
+        }
+    }
+} else {
+    Write-Host "Ingress controller pod not found. Please ensure the ingress-nginx controller is installed." -ForegroundColor Red
+}
+
+# Set up port forwarding for the ingress controller
+if ($isIngressReady) {
+    Write-Host "`nSetting up port forwarding for Ingress Controller..." -ForegroundColor Yellow
+    $ingressProcess = Start-Process -FilePath "kubectl" -ArgumentList "port-forward", "-n", "ingress-nginx", "service/ingress-nginx-controller", "8443:443", "8080:80" -PassThru -NoNewWindow
+    
+    if ($ingressProcess) {
+        Write-Host "✅ Ingress port-forward started (HTTP: 8080, HTTPS: 8443)" -ForegroundColor Green
+        
+        # Add hosts file entry
+        $hostsPath = "C:\Windows\System32\drivers\etc\hosts"
+        $hostEntry = "`n127.0.0.1 event-booking.example.com"
+        
+        Write-Host "`nAttempting to update hosts file automatically..." -ForegroundColor Yellow
+        
+        try {
+            # Try to add the hosts entry if running as admin
+            Add-Content -Path $hostsPath -Value $hostEntry -ErrorAction Stop
+            Write-Host "✅ Hosts file updated successfully!" -ForegroundColor Green
+        } catch {
+            Write-Host "❌ Cannot update hosts file automatically. Please add this entry manually:" -ForegroundColor Red
+            Write-Host "$hostEntry" -ForegroundColor White
+            Write-Host "To hosts file located at: $hostsPath" -ForegroundColor White
+        }
+        
+        # Show access URLs
+        Write-Host "`nYou can now access your application at:" -ForegroundColor Cyan
+        Write-Host "  • HTTP:  http://event-booking.example.com:8080" -ForegroundColor White
+        Write-Host "  • HTTPS: https://event-booking.example.com:8443" -ForegroundColor White
+        
+        # Store ingress process to clean up later
+        $portForwardProcesses += $ingressProcess
+    } else {
+        Write-Host "❌ Failed to set up ingress port forwarding" -ForegroundColor Red
+    }
+} else {
+    Write-Host "`nTo test the ingress locally, add the following entry to your hosts file (C:\Windows\System32\drivers\etc\hosts):" -ForegroundColor Yellow
+    Write-Host "127.0.0.1 event-booking.example.com" -ForegroundColor White
+    Write-Host "`nThen manually set up port forwarding with:" -ForegroundColor Yellow
+    Write-Host "kubectl port-forward -n ingress-nginx service/ingress-nginx-controller 8443:443 8080:80" -ForegroundColor White
+}
 
 # Summary
 Write-Host "`n`n=======================================" -ForegroundColor Cyan
@@ -165,6 +231,10 @@ if ($cleanup -eq "y") {
     Write-Host "`nCleaning up Kubernetes resources..." -ForegroundColor Yellow
     kubectl delete namespace online-event-booking-sarib-aftab
     Write-Host "Kubernetes resources deleted." -ForegroundColor Green
+    
+    Write-Host "`nNote: You may want to remove the hosts file entry:" -ForegroundColor Yellow
+    Write-Host "127.0.0.1 event-booking.example.com" -ForegroundColor White
+    Write-Host "From: C:\Windows\System32\drivers\etc\hosts" -ForegroundColor White
 } else {
     Write-Host "`nLeaving Kubernetes resources running. To clean up later, run 'kubectl delete namespace online-event-booking-sarib-aftab'" -ForegroundColor Yellow
 } 
