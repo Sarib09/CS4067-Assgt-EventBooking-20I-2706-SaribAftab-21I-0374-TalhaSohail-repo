@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: event-service
-        image: event-booking/event-service:latest
-        imagePullPolicy: IfNotPresent
+        image: localhost:5000/event-service:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 3002
         resources:

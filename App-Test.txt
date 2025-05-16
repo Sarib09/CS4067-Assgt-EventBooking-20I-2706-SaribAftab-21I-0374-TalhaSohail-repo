@@ -1,0 +1,13 @@
+./test-docker-compose-app.ps1
+
+./tag-images.ps1
+
+./fix-kubernetes-deployment.ps1
+
+
+portforward ingress
+
+kubectl port-forward -n online-event-booking-sarib-aftab service/frontend 8080:80
+
+event-booking.example.com
+localhost

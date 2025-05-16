@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: booking-service
-        image: event-booking/booking-service:latest
-        imagePullPolicy: IfNotPresent
+        image: localhost:5000/booking-service:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 3003
         resources:

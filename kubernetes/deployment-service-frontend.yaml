@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: event-booking/frontend:latest
-        imagePullPolicy: IfNotPresent
+        image: event-booking-frontend:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 80
         resources:
